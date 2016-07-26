@@ -26,7 +26,7 @@ airflow webserver -p 8080
 
 ## Dag construction:
 
-'''python
+```python
 
 # constructing a new dag requires importing airflow’s DAG class:
 from airflow import DAG
@@ -70,4 +70,4 @@ task2.execute()
 task_name.set_downstream(other_task) - other_task must run after task_name
 task_name.set_upstream(another_task) - task_name must run after to another_task
 
-'''
+```
