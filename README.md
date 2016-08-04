@@ -32,30 +32,49 @@ airflow webserver -p 8080
 from airflow import DAG
 
 # use the DAG class to instantiate a new dag, provide arguments for the name, and default settings. The latter can be created with a dictionary:
-#default_args = {
-#    'owner': 'airflow',
-#    'depends_on_past': False,
-#    'start_date': seven_days_ago,
-#    'email': ['airflow@airflow.com'],
-#    'email_on_failure': True,
-#    'email_on_retry': False,
-#    'retries': 1,
-#    'retry_delay': timedelta(minutes=5),
-# }
+
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'start_date': seven_days_ago,
+    'email': ['airflow@airflow.com'],
+    'email_on_failure': True,
+    'email_on_retry': False,
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+ }
 
 dag = DAG(‘dag_name’, default_args=default_args)
 
 # create the individual tasks you would like to run:
+# run ChangeProjections.py
 
 task1 =  BashOperator(
-          task_id ='delete_directory',
-          bash_command='''rm -rf ~/path/to/your/directory''',
+          task_id ='batch_projections',
+          bash_command='''python  ChangeProjections.py ''',
           dag=dag
         )
 
+# run Compare_privileges.py
+
+task2 = BashOperator(
+          task_id ='compare_priv',
+          bash_command='''python Compare_privileges.py ''',
+          dag=dag
+        )
+
+# run knack.py
+
+  task3 = BashOperator(
+          task_id='back_up_knack',
+          bash_command='''python knack.py ''',
+          dag=dag
+  )
+
+
 success = 'Your Task finished without errors'
 
-task2 = SlackAPIPostOperator(
+task4 = SlackAPIPostOperator(
    task_id='notfiy_success',
    token=Variable.get('slack_token'),
    channel='yourchannel',
@@ -66,8 +85,8 @@ task2 = SlackAPIPostOperator(
 task2.execute()
 
 # to set the dependency of one task on another use the convention:
-
-task_name.set_downstream(other_task) - other_task must run after task_name
-task_name.set_upstream(another_task) - task_name must run after to another_task
+task1 >> task4
+task2 >> task4
+task3 >> task4
 
 ```
